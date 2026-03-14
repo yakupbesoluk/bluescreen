@@ -1,0 +1,32 @@
+{
+    "name": "BlueScreen – Android Dev",
+    "image": "mcr.microsoft.com/devcontainers/java:17-bullseye",
+    "onCreateCommand": "chmod +x ${containerWorkspaceFolder}/.devcontainer/setup.sh",
+    "postCreateCommand": "bash ${containerWorkspaceFolder}/.devcontainer/setup.sh",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "mathiasfrohlich.Kotlin",
+                "naco-siren.gradle-language",
+                "redhat.java",
+                "vscjava.vscode-gradle",
+                "esafirm.kotlin-formatter"
+            ],
+            "settings": {
+                "editor.tabSize": 4,
+                "editor.insertSpaces": true,
+                "files.exclude": {
+                    "**/.gradle": true,
+                    "**/build": true
+                }
+            }
+        }
+    },
+    "remoteEnv": {
+        "ANDROID_HOME": "/opt/android-sdk",
+        "PATH": "${containerEnv:PATH}:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/gradle/bin"
+    },
+    "forwardPorts": [],
+    "mounts": [],
+    "runArgs": ["--memory=4g"]
+}

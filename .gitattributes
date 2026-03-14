@@ -1,0 +1,9 @@
+# Satır sonu normalizasyonu
+* text=auto
+
+# Shell scriptleri – çalıştırma iznini koru
+*.sh text eol=lf
+.devcontainer/setup.sh eol=lf
+
+# Gradle wrapper – çalıştırma iznini koru
+gradlew text eol=lf
