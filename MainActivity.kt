@@ -29,6 +29,10 @@ class MainActivity : AppCompatActivity() {
         setupAutoStartSwitch()
         setupPowerButton()
         setupPermissionCard()
+
+        // ── Reklam ──────────────────────────────────────────────────────────
+        AdManager.loadBanner(this, binding.bannerContainer)
+        AdManager.loadInterstitial(this)
     }
 
     override fun onResume() {
@@ -157,6 +161,8 @@ class MainActivity : AppCompatActivity() {
 
     // ─── Filtre Aç/Kapat ─────────────────────────────────────────────────────
 
+    private var toggleCount = 0
+
     private fun toggleFilter() {
         val newState = !prefs.isFilterEnabled
         prefs.isFilterEnabled = newState
@@ -165,6 +171,12 @@ class MainActivity : AppCompatActivity() {
         else          FilterService.stop(this)
 
         updatePowerButtonUi()
+
+        // Her 3 toggle'da bir interstitial göster
+        toggleCount++
+        if (toggleCount % 3 == 0) {
+            AdManager.showInterstitial(this)
+        }
     }
 
     private fun animatePower() {
