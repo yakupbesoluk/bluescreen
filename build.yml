@@ -1,0 +1,107 @@
+name: 📱 Build APK
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build tipi'
+        required: true
+        default: 'debug'
+        type: choice
+        options: [ debug, release, both ]
+
+jobs:
+  build:
+    name: APK Derle
+    runs-on: ubuntu-latest
+
+    steps:
+      # ─── Kaynak Kod ─────────────────────────────────────────────────────────
+      - name: 📥 Kodu indir
+        uses: actions/checkout@v4
+
+      # ─── Java 17 ────────────────────────────────────────────────────────────
+      - name: ☕ Java 17 kur
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # ─── Gradle ─────────────────────────────────────────────────────────────
+      - name: 🐘 Gradle kur
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.2'
+
+      # ─── Gradle Cache ───────────────────────────────────────────────────────
+      - name: 💾 Gradle önbelleği
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # ─── İzinler ────────────────────────────────────────────────────────────
+      - name: 🔐 gradlew iznini ver
+        run: chmod +x gradlew || true
+
+      # ─── Debug APK ──────────────────────────────────────────────────────────
+      - name: 🔨 Debug APK derle
+        if: github.event.inputs.build_type != 'release'
+        run: |
+          if [ -f "gradlew" ]; then
+            ./gradlew assembleDebug --no-daemon
+          else
+            gradle assembleDebug --no-daemon
+          fi
+
+      - name: 📤 Debug APK yükle
+        if: github.event.inputs.build_type != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlueScreen-debug-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 30
+
+      # ─── Release APK ────────────────────────────────────────────────────────
+      - name: 🚀 Release APK derle
+        if: github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both'
+        run: |
+          if [ -f "gradlew" ]; then
+            ./gradlew assembleRelease --no-daemon
+          else
+            gradle assembleRelease --no-daemon
+          fi
+
+      - name: 📤 Release APK yükle
+        if: github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both'
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlueScreen-release-${{ github.run_number }}
+          path: app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      # ─── Build Özeti ────────────────────────────────────────────────────────
+      - name: 📊 Build özeti
+        if: always()
+        run: |
+          echo "## 📱 BlueScreen Build Özeti" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Alan | Değer |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Run # | ${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
+          
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          if [ -f "$APK_PATH" ]; then
+            SIZE=$(du -sh "$APK_PATH" | cut -f1)
+            echo "| APK Boyutu | $SIZE |" >> $GITHUB_STEP_SUMMARY
+          fi
